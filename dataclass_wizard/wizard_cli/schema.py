@@ -791,15 +791,18 @@ class PyDataclassGenerator(metaclass=property_wizard):
         obj = cls({}, **constructor_kwargs)
 
         for k, typ in parsed_types.items():
-            underscored_field = to_snake_case(k)
-            obj.parsed_types[underscored_field].append(typ)
+            if '-' in k:
+                raise ValueError(f"Unsupported key '{k}'. Keys should not contain dashes.")
+            obj.parsed_types[k].append(typ)
 
         return obj
 
     def __post_init__(self, data: JSONObject, nested_lvl: int):
 
         for k, v in data.items():
-            underscored_field = to_snake_case(k)
+            if '-' in k:
+                raise ValueError(f"Unsupported key '{k}'. Keys should not contain dashes.")
+                
             typ = json_to_python_type(v)
 
             if typ is PyDataType.DICT:
@@ -814,7 +817,7 @@ class PyDataclassGenerator(metaclass=property_wizard):
                     nested_lvl=nested_lvl,
                 )
 
-            self.parsed_types[underscored_field].append(typ)
+            self.parsed_types[k].append(typ)
 
     def __or__(self, other):
         if not isinstance(other, PyDataclassGenerator):
